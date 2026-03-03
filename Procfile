@@ -1,2 +1,1 @@
-python-telegram-bot[job-queue]==21.10
-tzdata
+worker: python main.py
