@@ -23,6 +23,10 @@ from telegram.ext import (
     filters,
 )
 
+# Load .env locally
+from dotenv import load_dotenv
+load_dotenv()
+
 # ---------------- CONFIG ---------------- #
 
 logging.basicConfig(
@@ -32,11 +36,18 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+if not TOKEN:
+    raise ValueError("Please set the TELEGRAM_BOT_TOKEN environment variable")
+
 NIGERIA_TZ = ZoneInfo("Africa/Lagos")
-DB_FILE = "accountability.db"
-PERSISTENCE_FILE = "bot_persistence"
+DB_FILE = os.getenv("DB_FILE", "/data/accountability.db")
+PERSISTENCE_FILE = os.getenv("PERSISTENCE_FILE", "/data/bot_persistence")
 
 WAKE, SLEEP, BIBLE, PASSAGE, PRAYER, LEARNING, SOURCE, INTEGRITY = range(8)
+
+# Ensure /data folder exists
+os.makedirs(os.path.dirname(DB_FILE), exist_ok=True)
+os.makedirs(os.path.dirname(PERSISTENCE_FILE), exist_ok=True)
 
 # ---------------- DATABASE ---------------- #
 
@@ -299,7 +310,7 @@ async def set_goal(update: Update, context: ContextTypes.DEFAULT_TYPE):
         conn.execute("UPDATE users SET weekly_goal=? WHERE user_id=?",(goal_text,update.effective_user.id))
     await update.message.reply_text(f"🎯 Weekly goal set: *{escape_md(goal_text)}*",parse_mode=constants.ParseMode.MARKDOWN_V2)
 
-# ---------------- DAILY KNOWLEDGE DIGEST ---------------- #
+# ---------------- DAILY JOBS ---------------- #
 
 async def daily_knowledge_digest(context: ContextTypes.DEFAULT_TYPE):
     today=datetime.datetime.now(NIGERIA_TZ).date().isoformat()
@@ -317,8 +328,6 @@ async def daily_knowledge_digest(context: ContextTypes.DEFAULT_TYPE):
     for gid in groups:
         await context.bot.send_message(chat_id=gid,text=text,parse_mode=constants.ParseMode.MARKDOWN_V2)
 
-# ---------------- THROWBACK ---------------- #
-
 async def throwback(context: ContextTypes.DEFAULT_TYPE):
     with sqlite3.connect(DB_FILE) as conn:
         rows = conn.execute("""
@@ -332,8 +341,6 @@ async def throwback(context: ContextTypes.DEFAULT_TYPE):
     groups=context.bot_data.get("groups",[])
     for gid in groups:
         await context.bot.send_message(chat_id=gid,text=text,parse_mode=constants.ParseMode.MARKDOWN_V2)
-
-# ---------------- MOBILE-FRIENDLY WEEKLY TABLES ---------------- #
 
 async def send_weekly_progress_tables(context: ContextTypes.DEFAULT_TYPE):
     today=datetime.datetime.now(NIGERIA_TZ).date()
