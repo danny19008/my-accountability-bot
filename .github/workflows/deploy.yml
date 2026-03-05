@@ -3,17 +3,19 @@ name: Deploy to JustRunMy.App
 on:
   push:
     branches:
-      - main  # change if your default branch is different
+      - main  # change this if your default branch is different
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v3
-      - name: Push to JustRunMy.App
+
+      - name: Deploy to JustRunMy.App
         run: |
           git init
           git remote add deploy https://i9J6Qb:t2S5Kpo3R8Hw@justrunmy.app/git/r_Bd25Pg
           git add .
-          git commit -m "Deploy from GitHub Actions"
+          git commit -m "Deploy from GitHub Actions" || echo "No changes to commit"
           git push -u deploy HEAD:deploy --force
